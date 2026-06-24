@@ -1,0 +1,116 @@
+name: Build WingDrum Controller
+
+on:
+  push:
+    tags:
+      - 'v*'        # v1.0.0 などのタグをpushしたときだけビルド
+  workflow_dispatch: # 手動実行も可能
+
+jobs:
+  # ── Windows ビルド ────────────────────────────────────────────
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyinstaller pywebview pyserial
+
+      - name: Build with PyInstaller
+        run: python -m PyInstaller --clean wingdrum.spec
+
+      - name: Install Inno Setup
+        run: choco install innosetup --yes
+
+      - name: Build installer
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" wingdrum_installer.iss
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: WingDrumController-Windows
+          path: installer/WingDrumController_Setup.exe
+
+  # ── macOS ビルド ──────────────────────────────────────────────
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyinstaller pywebview pyserial
+
+      - name: Build with PyInstaller
+        run: python -m PyInstaller --clean wingdrum.spec
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Build DMG
+        run: |
+          mkdir -p installer
+          create-dmg \
+            --volname "WingDrum Controller" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "WingDrumController.app" 150 190 \
+            --hide-extension "WingDrumController.app" \
+            --app-drop-link 450 190 \
+            "installer/WingDrumController.dmg" \
+            "dist/WingDrumController.app"
+
+      - name: Upload macOS DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: WingDrumController-macOS
+          path: installer/WingDrumController.dmg
+
+  # ── Release作成 ───────────────────────────────────────────────
+  release:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: WingDrumController-Windows
+          path: artifacts/
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: WingDrumController-macOS
+          path: artifacts/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/WingDrumController_Setup.exe
+            artifacts/WingDrumController.dmg
+          body: |
+            ## WingDrum Controller
+
+            PC controller app for PhonicBloom WingDrum.
+
+            ### Download
+            - **Windows**: `WingDrumController_Setup.exe` をダウンロードしてダブルクリック
+            - **macOS**: `WingDrumController.dmg` をダウンロードしてApplicationsにドラッグ
+
+            ### Requirements
+            - PhonicBloom WingDrum with experimental firmware v1.01

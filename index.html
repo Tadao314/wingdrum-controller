@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WingDrum Controller</title>
+<style>
+:root {
+  --wd-bg:#0e0d0c;--wd-surface:#181614;
+  --wd-border:rgba(232,196,110,0.25);
+  --wd-gold:#e8c46e;--wd-gold-dim:rgba(232,196,110,0.35);
+  --wd-text:#f0ead8;--wd-text2:#b5a987;--wd-text3:#8a7f68;
+  --wd-accent:#e0716b;--wd-accent-glow:rgba(224,113,107,0.2);
+  --wd-ok:#7fd19c;--wd-err:#e08585;
+  --wd-green:#7fd19c;--wd-green-glow:rgba(127,209,156,0.2);
+  --wd-red:#e0716b;--wd-red-glow:rgba(224,113,107,0.2);
+}
+.light-mode{
+  --wd-bg:#f7f4ec;--wd-surface:#fdfcf8;
+  --wd-border:rgba(160,128,60,0.22);
+  --wd-gold:#9a7020;--wd-gold-dim:rgba(154,112,32,0.3);
+  --wd-text:#2a2418;--wd-text2:#6b5f3e;--wd-text3:#a89060;
+  --wd-accent:#6a5fd3;--wd-accent-glow:rgba(106,95,211,0.12);
+  --wd-ok:#2d7a46;--wd-err:#a02020;
+  --wd-green:#2d7a46;--wd-green-glow:rgba(45,122,70,0.15);
+  --wd-red:#a02020;--wd-red-glow:rgba(160,32,32,0.15);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;background:var(--wd-bg);}
+.wd-root{
+  background:var(--wd-bg);font-family:Georgia,serif;
+  padding:6px 8px;border-radius:0;border:none;
+  display:flex;flex-direction:column;height:100vh;overflow:hidden;
+}
+/* topbar */
+.wd-topbar{display:flex;align-items:center;gap:6px;padding:0 2px 6px;flex-wrap:nowrap;flex-shrink:0;}
+.wd-title{font-size:13px;font-weight:500;letter-spacing:0.08em;color:var(--wd-gold);margin-right:4px;}
+.wd-com-label{font-size:11px;color:var(--wd-text3);}
+select.ws{font-size:11px;padding:3px 6px;border-radius:8px;border:0.5px solid var(--wd-border);background:var(--wd-bg);color:var(--wd-text);cursor:pointer;width:90px;}
+button.wb{font-size:11px;padding:4px 12px;border-radius:8px;border:0.5px solid var(--wd-gold-dim);background:transparent;color:var(--wd-gold);cursor:pointer;}
+button.wb:hover{background:var(--wd-gold-dim);}
+button.wb:disabled{opacity:0.4;cursor:not-allowed;}
+.wd-dot{width:7px;height:7px;border-radius:50%;background:var(--wd-err);flex-shrink:0;}
+.wd-dot.on{background:var(--wd-ok);}
+.wd-conn-lbl{font-size:11px;color:var(--wd-err);}
+.wd-conn-lbl.on{color:var(--wd-ok);}
+.wd-resetbtn-top{font-size:10px;padding:3px 10px;border-radius:7px;border:0.5px solid var(--wd-text3);background:transparent;color:var(--wd-text3);cursor:pointer;transition:all 0.2s;}
+.wd-resetbtn-top:hover{border-color:var(--wd-err);color:var(--wd-err);}
+.wd-spacer{flex:1;}
+.theme-toggle{display:flex;align-items:center;gap:1px;border:0.5px solid var(--wd-border);border-radius:10px;padding:2px;}
+.theme-btn{font-size:12px;width:22px;height:20px;border-radius:8px;border:none;background:transparent;color:var(--wd-gold);cursor:pointer;opacity:0.45;}
+.theme-btn.active{background:var(--wd-gold-dim);opacity:1;}
+/* panels */
+.wd-panels{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:0 0 4px;flex-shrink:0;}
+.wd-panel{border:0.5px solid var(--wd-border);border-radius:10px;padding:6px 9px;}
+.wd-plabel{font-size:11px;color:var(--wd-text3);margin-bottom:3px;letter-spacing:0.06em;}
+select.wd-sscale{width:100%;font-size:12px;padding:5px 6px;border-radius:7px;border:0.5px solid var(--wd-border);background:var(--wd-bg);color:var(--wd-text);margin-bottom:5px;cursor:pointer;}
+.wd-patch-section{margin-bottom:6px;}
+.wd-patch-type-label{font-size:10px;color:var(--wd-text3);margin-bottom:3px;}
+.wd-patch-dots{display:flex;gap:3px;flex-wrap:wrap;}
+.pdot{width:12px;height:12px;border-radius:50%;border:1px solid var(--wd-border);background:transparent;cursor:pointer;transition:all 0.12s;}
+.pdot:hover{border-color:var(--wd-gold-dim);}
+.pdot.sel{background:var(--wd-accent);border-color:var(--wd-accent);}
+.wd-hz{font-size:22px;font-weight:500;color:var(--wd-text);}
+.wd-hzu{font-size:10px;color:var(--wd-text3);margin-left:2px;}
+.wd-hz-fine{font-size:12px;color:var(--wd-text2);margin-left:4px;}
+input[type=range].wslider{width:100%;margin-top:7px;accent-color:var(--wd-gold);}
+.wd-trange{display:flex;justify-content:space-between;font-size:8px;color:var(--wd-text3);margin-top:1px;}
+.wd-fine-reset{background:none;border:1px solid var(--wd-text3);border-radius:3px;color:var(--wd-text3);font-size:8px;padding:0 4px;cursor:pointer;line-height:14px;}
+.wd-fine-reset:hover{border-color:var(--wd-gold);color:var(--wd-gold);}
+.pad-label-bg.drag-over{fill:var(--wd-gold);opacity:0.85;}
+.wd-subrow{margin-top:6px;padding-top:6px;border-top:0.5px solid var(--wd-border);}
+.wd-subrow-label{font-size:10px;color:var(--wd-text3);margin-bottom:2px;}
+.wd-fx-uc{margin-top:4px;padding:8px 10px;border-radius:7px;border:0.5px dashed var(--wd-text3);text-align:center;}
+.wd-fx-uc-label{font-size:10px;color:var(--wd-text3);}
+.wd-fx-uc-sub{font-size:9px;color:var(--wd-text3);opacity:0.6;margin-top:2px;}
+/* scale reg button */
+.wd-scale-reg-btn{width:100%;font-size:10px;padding:4px 8px;border-radius:6px;border:0.5px solid var(--wd-border);background:transparent;color:var(--wd-text3);cursor:pointer;margin-bottom:6px;text-align:left;}
+.wd-scale-reg-btn:hover{border-color:var(--wd-gold);color:var(--wd-gold);}
+/* scale extra */
+.rot-val{font-size:11px;color:var(--wd-text2);min-width:24px;text-align:center;}
+.wd-flip-btn{font-size:11px;padding:4px 8px;border-radius:6px;border:0.5px solid var(--wd-border);background:transparent;color:var(--wd-text2);cursor:pointer;}
+.wd-flip-btn:hover{border-color:var(--wd-gold);color:var(--wd-gold);}
+.wd-flip-btn.active{border-color:var(--wd-gold);color:var(--wd-gold);background:rgba(184,145,68,0.15);}
+/* user scale list */
+
+/* カスタムスケールドロップダウン */
+.wd-scale-dd{position:relative;width:100%;margin-bottom:5px;}
+.wd-scale-btn{width:100%;font-size:12px;padding:5px 26px 5px 8px;border-radius:7px;border:0.5px solid var(--wd-border);background:var(--wd-bg);color:var(--wd-text);cursor:pointer;text-align:left;position:relative;}
+.wd-scale-btn::after{content:"▾";position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--wd-text3);pointer-events:none;}
+.wd-scale-list{display:none;position:absolute;top:100%;left:0;right:0;z-index:50;background:var(--wd-surface);border:0.5px solid var(--wd-gold-dim);border-radius:8px;max-height:260px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,0.4);margin-top:2px;}
+.wd-scale-list.open{display:block;}
+.wd-scale-group{font-size:10px;color:var(--wd-text3);padding:6px 8px 2px;letter-spacing:0.05em;border-top:0.5px solid var(--wd-border);}
+.wd-scale-group:first-child{border-top:none;}
+.wd-scale-item{display:flex;align-items:center;padding:5px 8px;font-size:12px;color:var(--wd-text);cursor:pointer;gap:6px;}
+.wd-scale-item:hover{background:var(--wd-gold-dim);}
+.wd-scale-item.sel{color:var(--wd-gold);font-weight:500;}
+.wd-scale-item-name{flex:1;}
+.wd-scale-item-del{font-size:10px;width:16px;height:16px;border-radius:50%;border:0.5px solid var(--wd-err);background:transparent;color:var(--wd-err);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;padding:0;}
+.wd-scale-item-del:hover{background:var(--wd-err);color:#fff;}
+
+.wd-user-scale-item{display:flex;align-items:center;gap:4px;margin-top:3px;}
+.wd-user-del{font-size:10px;width:16px;height:16px;border-radius:50%;border:0.5px solid var(--wd-err);background:transparent;color:var(--wd-err);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;}
+.wd-user-del:hover{background:var(--wd-err);color:#fff;}
+/* stage */
+.preset-label{font-size:12px;color:var(--wd-text3);text-align:center;letter-spacing:0.06em;margin-bottom:-4px;flex-shrink:0;}
+.wd-stage{position:relative;display:flex;align-items:center;justify-content:center;padding:2px;flex:1;min-height:0;}
+/* SVG elements */
+.pad-note-name{font-size:20px;font-weight:600;fill:var(--wd-text);text-anchor:middle;dominant-baseline:middle;paint-order:stroke fill;stroke:rgba(0,0,0,0.75);stroke-width:2px;stroke-linejoin:round;}
+.light-mode .pad-note-name{stroke:rgba(255,255,255,0.75);}
+.pad-note-cent{font-size:14px;fill:var(--wd-text2);text-anchor:middle;dominant-baseline:middle;paint-order:stroke fill;stroke:rgba(0,0,0,0.75);stroke-width:2px;stroke-linejoin:round;}
+.light-mode .pad-note-cent{stroke:rgba(255,255,255,0.75);}
+
+.hit-pad{fill:transparent;stroke:none;cursor:pointer;}
+.pad-group{cursor:pointer;}
+.pad-group .pad-hit-area{fill:transparent;stroke:none;}
+.pad-group .pad-label-bg{fill:rgba(255,255,255,0.5);}
+.light-mode .pad-group .pad-label-bg{fill:rgba(255,255,255,0.7);}
+.pad-group:hover .pad-hit-area,.pad-group.active .pad-hit-area{fill:rgba(224,113,107,0.45);}
+.light-mode .pad-group:hover .pad-hit-area,.light-mode .pad-group.active .pad-hit-area{fill:rgba(106,95,211,0.18);}
+.pad-group:hover .pad-label-bg,.pad-group.active .pad-label-bg{fill:rgba(224,113,107,0.35);}
+.light-mode .pad-group:hover .pad-label-bg,.light-mode .pad-group.active .pad-label-bg{fill:rgba(106,95,211,0.15);}
+
+
+.preset-circle{fill:var(--wd-bg);stroke:var(--wd-text3);stroke-width:1.5;cursor:pointer;transition:all 0.12s;}
+.preset-circle:hover{stroke:var(--wd-gold);}
+.preset-circle.sel{fill:var(--wd-accent);stroke:var(--wd-accent);}
+.preset-num{font-size:11px;fill:var(--wd-text3);text-anchor:middle;dominant-baseline:middle;pointer-events:none;font-family:sans-serif;}
+.preset-num.sel{fill:#fff;}
+/* popup */
+.pp{position:fixed;z-index:20;background:var(--wd-surface);border:0.5px solid var(--wd-gold-dim);border-radius:10px;padding:12px 14px;width:250px;display:none;box-shadow:0 6px 24px rgba(0,0,0,0.5);}
+.pp.show{display:block;}
+.pp-title{font-size:11px;color:var(--wd-gold);margin-bottom:9px;}
+.pp-row{display:flex;align-items:center;gap:6px;margin-bottom:7px;flex-wrap:nowrap;overflow:hidden;}
+.pp-lbl{font-size:10px;color:var(--wd-text2);min-width:42px;}
+.pp-val{font-size:10px;color:var(--wd-text);min-width:30px;text-align:right;}
+input[type=range].pp-sl{flex:1;min-width:0;accent-color:var(--wd-gold);}
+select.pp-note-name{font-size:10px;padding:3px 4px;border-radius:5px;border:0.5px solid var(--wd-border);background:var(--wd-bg);color:var(--wd-text);width:58px;}
+select.pp-note-oct{font-size:10px;padding:3px 4px;border-radius:5px;border:0.5px solid var(--wd-border);background:var(--wd-bg);color:var(--wd-text);width:44px;}
+/* apply */
+.wd-bottombar{display:flex;justify-content:center;padding:4px 0 2px;flex-shrink:0;}
+.wd-bigbtn{width:100%;max-width:300px;font-size:14px;padding:7px;border-radius:10px;border:1.5px solid var(--wd-green);background:var(--wd-green-glow);color:var(--wd-green);cursor:pointer;letter-spacing:0.06em;font-weight:500;transition:border-color 0.3s,background 0.3s,color 0.3s;}
+.wd-bigbtn.dirty{border-color:var(--wd-red)!important;background:var(--wd-red-glow)!important;color:var(--wd-red)!important;box-shadow:0 0 10px var(--wd-red-glow);}
+.wd-bigbtn:hover{background:var(--wd-green);color:#fff;}
+.wd-bigbtn.dirty:hover{background:var(--wd-red)!important;color:#fff!important;}
+.wd-bigbtn:disabled{opacity:0.4;cursor:not-allowed;}
+/* log */
+.wd-log{padding:4px 8px;border-top:0.5px solid var(--wd-border);flex-shrink:0;}
+.wd-log-title{font-size:10px;color:var(--wd-text3);margin-bottom:5px;letter-spacing:0.08em;}
+.wd-log-box{font-family:monospace;font-size:10px;color:var(--wd-text2);height:55px;overflow-y:auto;line-height:1.6;user-select:text;-webkit-user-select:text;cursor:text;}
+.log-ok{color:var(--wd-ok);}
+.log-err{color:var(--wd-err);}
+.log-ts{color:var(--wd-text3);margin-right:5px;}
+/* overlays */
+.wd-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;align-items:center;justify-content:center;}
+.wd-overlay.show{display:flex;}
+.wd-dialog{background:var(--wd-surface);border:0.5px solid var(--wd-gold-dim);border-radius:14px;padding:24px 28px;max-width:320px;width:90%;}
+.wd-dialog-title{font-size:14px;color:var(--wd-err);margin-bottom:8px;font-weight:500;}
+.wd-dialog-msg{font-size:12px;color:var(--wd-text2);margin-bottom:20px;line-height:1.6;}
+.wd-dialog-btns{display:flex;gap:10px;justify-content:flex-end;}
+.wd-btn-cancel{font-size:12px;padding:8px 18px;border-radius:8px;border:0.5px solid var(--wd-border);background:transparent;color:var(--wd-text2);cursor:pointer;}
+.wd-btn-ok{font-size:12px;padding:8px 18px;border-radius:8px;border:none;background:var(--wd-err);color:#fff;cursor:pointer;}
+.wd-btn-ok.gold{background:var(--wd-gold);color:#000;font-weight:500;}
+input.wd-inp{width:100%;font-size:13px;padding:7px 10px;border-radius:7px;border:0.5px solid var(--wd-gold-dim);background:var(--wd-bg);color:var(--wd-text);margin-bottom:14px;}
+</style>
+</head>
+<body>
+<div class="wd-root light-mode" id="wdRoot">
+
+<div class="wd-topbar">
+  <span class="wd-title">WingDrum Controller</span>
+  <span class="wd-com-label">COM</span>
+  <select class="ws" id="comSel"><option value="">Scanning...</option></select>
+  <button class="wb" id="connBtn" onclick="toggleConn()">Connect</button>
+  <div class="wd-dot" id="dot"></div>
+  <span class="wd-conn-lbl" id="connLbl">Disconnected</span>
+  <button class="wd-resetbtn-top" onclick="confirmReset()">↺ scale reset</button>
+  <div class="wd-spacer"></div>
+  <div class="theme-toggle">
+    <button class="theme-btn" id="tDark" onclick="setTheme(true)">&#9789;</button>
+    <button class="theme-btn active" id="tLight" onclick="setTheme(false)">&#9728;</button>
+  </div>
+</div>
+
+<div class="wd-panels">
+  <!-- Scale -->
+  <div class="wd-panel">
+    <div class="wd-plabel">SCALE</div>
+    <div class="wd-scale-dd" id="scaleDd">
+      <button class="wd-scale-btn" id="scaleBtn" onclick="toggleScaleDd(event)">Celtic Minor</button>
+      <div class="wd-scale-list" id="scaleList">
+        <div class="wd-scale-group">Minor</div>
+        <div class="wd-scale-item" data-val="minor" onclick="selectScaleItem('minor','Minor')"><span class="wd-scale-item-name">Minor</span></div>
+        <div class="wd-scale-item" data-val="minor-harmonic" onclick="selectScaleItem('minor-harmonic','Minor Harmonic')"><span class="wd-scale-item-name">Minor Harmonic</span></div>
+        <div class="wd-scale-group">Major</div>
+        <div class="wd-scale-item" data-val="major" onclick="selectScaleItem('major','Major')"><span class="wd-scale-item-name">Major</span></div>
+        <div class="wd-scale-item" data-val="major-pentatonic" onclick="selectScaleItem('major-pentatonic','Major Pentatonic')"><span class="wd-scale-item-name">Major Pentatonic</span></div>
+        <div class="wd-scale-item" data-val="major-flat" onclick="selectScaleItem('major-flat','Major Flat')"><span class="wd-scale-item-name">Major Flat</span></div>
+        <div class="wd-scale-group">Modes</div>
+        <div class="wd-scale-item" data-val="lydian" onclick="selectScaleItem('lydian','Lydian')"><span class="wd-scale-item-name">Lydian</span></div>
+        <div class="wd-scale-item" data-val="phrygian" onclick="selectScaleItem('phrygian','Phrygian')"><span class="wd-scale-item-name">Phrygian</span></div>
+        <div class="wd-scale-item" data-val="ionian" onclick="selectScaleItem('ionian','Ionian')"><span class="wd-scale-item-name">Ionian</span></div>
+        <div class="wd-scale-group">World</div>
+        <div class="wd-scale-item" data-val="kurd-minor" onclick="selectScaleItem('kurd-minor','Kurd Minor')"><span class="wd-scale-item-name">Kurd Minor</span></div>
+        <div class="wd-scale-item sel" data-val="celtic-minor" onclick="selectScaleItem('celtic-minor','Celtic Minor')"><span class="wd-scale-item-name">Celtic Minor</span></div>
+        <div class="wd-scale-item" data-val="akebono-pentatonic" onclick="selectScaleItem('akebono-pentatonic','Akebono Pentatonic')"><span class="wd-scale-item-name">Akebono Pentatonic</span></div>
+        <div class="wd-scale-item" data-val="annaziska" onclick="selectScaleItem('annaziska','Annaziska')"><span class="wd-scale-item-name">Annaziska</span></div>
+        <div class="wd-scale-item" data-val="pygmy-scale" onclick="selectScaleItem('pygmy-scale','Pygmy')"><span class="wd-scale-item-name">Pygmy</span></div>
+        <div class="wd-scale-item" data-val="deep-sea" onclick="selectScaleItem('deep-sea','Deep Sea')"><span class="wd-scale-item-name">Deep Sea</span></div>
+        <div class="wd-scale-item" data-val="cloud" onclick="selectScaleItem('cloud','Cloud')"><span class="wd-scale-item-name">Cloud</span></div>
+        <div class="wd-scale-item" data-val="celtic-2" onclick="selectScaleItem('celtic-2','Celtic 2')"><span class="wd-scale-item-name">Celtic 2</span></div>
+        <div class="wd-scale-item" data-val="daze" onclick="selectScaleItem('daze','Daze')"><span class="wd-scale-item-name">Daze</span></div>
+        <div class="wd-scale-item" data-val="hijaz" onclick="selectScaleItem('hijaz','Hijaz')"><span class="wd-scale-item-name">Hijaz</span></div>
+        <div class="wd-scale-item" data-val="kurd-2" onclick="selectScaleItem('kurd-2','Kurd 2')"><span class="wd-scale-item-name">Kurd 2</span></div>
+        <div class="wd-scale-item" data-val="voice" onclick="selectScaleItem('voice','Voice')"><span class="wd-scale-item-name">Voice</span></div>
+        <div class="wd-scale-item" data-val="shade" onclick="selectScaleItem('shade','Shade')"><span class="wd-scale-item-name">Shade</span></div>
+        <div class="wd-scale-group">World (Microtonal)</div>
+        <div class="wd-scale-item" data-val="rast" onclick="selectScaleItem('rast','Rast')"><span class="wd-scale-item-name">Rast</span></div>
+        <div class="wd-scale-item" data-val="bayati" onclick="selectScaleItem('bayati','Bayati')"><span class="wd-scale-item-name">Bayati</span></div>
+        <div class="wd-scale-item" data-val="saba" onclick="selectScaleItem('saba','Saba')"><span class="wd-scale-item-name">Saba</span></div>
+        <div class="wd-scale-item" data-val="hicaz" onclick="selectScaleItem('hicaz','Hicaz')"><span class="wd-scale-item-name">Hicaz</span></div>
+        <div class="wd-scale-item" data-val="bhairav" onclick="selectScaleItem('bhairav','Bhairav')"><span class="wd-scale-item-name">Bhairav</span></div>
+        <div class="wd-scale-item" data-val="todi" onclick="selectScaleItem('todi','Todi')"><span class="wd-scale-item-name">Todi</span></div>
+        <div class="wd-scale-item" data-val="darbari" onclick="selectScaleItem('darbari','Darbari Kanada')"><span class="wd-scale-item-name">Darbari Kanada</span></div>
+        <div class="wd-scale-item" data-val="slendro" onclick="selectScaleItem('slendro','Slendro')"><span class="wd-scale-item-name">Slendro</span></div>
+        <div class="wd-scale-item" data-val="pelog" onclick="selectScaleItem('pelog','Pelog')"><span class="wd-scale-item-name">Pelog</span></div>
+        <div class="wd-scale-item" data-val="bali-pelog" onclick="selectScaleItem('bali-pelog','Bali Pelog')"><span class="wd-scale-item-name">Bali Pelog</span></div>
+        <div class="wd-scale-group" id="userGroup" style="display:none;">User</div>
+      </div>
+    </div>
+
+    <!-- Register scale button -->
+    <button class="wd-scale-reg-btn" onclick="openScaleNamePopup()">+ Register current scale</button>
+
+    <!-- Transpose -->
+    <div class="wd-subrow">
+      <div class="wd-subrow-label">Transpose</div>
+      <input type="range" class="wslider" min="-6" max="6" value="0" step="1" id="transposeSlider" oninput="onTranspose(this.value)">
+      <div class="wd-trange"><span>-6</span><span>0</span><span>+6</span></div>
+      <div style="text-align:center;font-size:12px;color:var(--wd-text2);margin-top:4px;" id="transposeDisp">0 st</div>
+    </div>
+
+    <!-- Rotation -->
+    <div class="wd-subrow">
+      <div class="wd-subrow-label">Rotation</div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <input type="range" class="wslider" min="0" max="7" value="0" step="1" id="rotSlider" oninput="onRotation(this.value)" style="margin-top:0;">
+        <span class="rot-val" id="rotVal">+0</span>
+      </div>
+    </div>
+
+    <!-- Flip -->
+    <div style="margin-top:8px;">
+      <button class="wd-flip-btn" id="flipBtn" onclick="flipScale()">⇄ Flip L/R</button>
+    </div>
+
+
+  </div>
+
+  <!-- Patch -->
+  <div class="wd-panel">
+    <div class="wd-plabel">PATCH / TIMBRE</div>
+    <div class="wd-patch-section">
+      <div class="wd-patch-type-label">Metal (1–11)</div>
+      <div class="wd-patch-dots" id="metalDots"></div>
+    </div>
+    <div class="wd-patch-section">
+      <div class="wd-patch-type-label">Wood (1–5)</div>
+      <div class="wd-patch-dots" id="woodDots"></div>
+    </div>
+    <div class="wd-subrow">
+      <div class="wd-plabel" style="margin-bottom:4px;">EFFECT</div>
+      <div class="wd-fx-uc">
+        <div class="wd-fx-uc-label">🚧 UNDER CONSTRUCTION</div>
+        <div class="wd-fx-uc-sub">Reverb / Delay control coming soon</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tuning -->
+  <div class="wd-panel">
+    <div class="wd-plabel">GLOBAL TUNING</div>
+    <div>
+      <span class="wd-hz" id="hzDisp">440</span>
+      <span class="wd-hzu">Hz</span>
+      <span class="wd-hz-fine" id="hzFineDisp"></span>
+    </div>
+    <input type="range" class="wslider" min="400" max="480" value="440" step="1" id="tunSlider" oninput="onTun()">
+    <div class="wd-trange"><span>400</span><span>440</span><span>480</span></div>
+    <div class="wd-subrow">
+      <div class="wd-subrow-label">Fine Tune</div>
+      <input type="range" class="wslider" min="-99" max="99" value="0" step="1" id="tunFineSlider" oninput="onTun()">
+      <div class="wd-trange"><span>-0.99</span><button class="wd-fine-reset" onclick="resetFineTune()" title="Reset to 0.00">0</button><span>+0.99</span></div>
+    </div>
+    <div class="wd-subrow">
+      <div class="wd-subrow-label">Octave</div>
+      <input type="range" class="wslider" min="-3" max="3" value="0" step="1" id="octSlider" oninput="onOctSlider(this.value)">
+      <div class="wd-trange"><span>-3</span><span>0</span><span>+3</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="preset-label">scale preset</div>
+<div class="wd-stage" id="stage">
+  <svg width="100%" height="100%" viewBox="-320 -320 640 640" id="drumSvg" xmlns="http://www.w3.org/2000/svg" style="max-width:640px;max-height:640px;">
+    <!-- WingDrum image -->
+    <image id="wdImg" href="wd_wh.png" x="-210" y="-210" width="420" height="420" preserveAspectRatio="xMidYMid meet"/>
+    <g id="presetBtns"></g>
+    <g id="padGroups"></g>
+  </svg>
+  <!-- popup: position:fixed, placed by mouse coords -->
+  <div class="pp" id="padPopup">
+    <div class="pp-title" id="ppTitle">Pad 1</div>
+    <div class="pp-row">
+      <span class="pp-lbl">Note</span>
+      <select class="pp-note-name" id="ppNoteName" onchange="ppNoteChange()"></select>
+      <select class="pp-note-oct" id="ppNoteOct" onchange="ppNoteChange()"></select>
+    </div>
+    <div class="pp-row" style="align-items:center;">
+      <span class="pp-lbl">Detune</span>
+      <input type="range" class="pp-sl" min="-50" max="50" value="0" step="1" id="ppCent" oninput="ppCentUpd(this.value)">
+      <span class="pp-val" id="ppCentVal" style="min-width:36px;text-align:right;font-size:11px;font-family:monospace;">0¢</span>
+    </div>
+  </div>
+</div>
+
+<div class="wd-bottombar">
+  <button class="wd-bigbtn" id="applyBtn" onclick="applyAll()">apply</button>
+</div>
+
+<div class="wd-log">
+  <div class="wd-log-title">LOG — <span style="font-size:9px;opacity:0.6;">select text to copy</span></div>
+  <div class="wd-log-box" id="logBox"><div><span class="log-ts">--:--:--</span>Ready.</div></div>
+</div>
+</div>
+
+<!-- Reset confirm -->
+<div class="wd-overlay" id="resetOverlay">
+  <div class="wd-dialog">
+    <div class="wd-dialog-title">Reset to factory defaults</div>
+    <div class="wd-dialog-msg">Resets all slots of the current patch to factory defaults.<br>This cannot be undone. Continue?</div>
+    <div class="wd-dialog-btns">
+      <button class="wd-btn-cancel" onclick="closeOverlay('resetOverlay')">Cancel</button>
+      <button class="wd-btn-ok" onclick="doReset()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scale name popup -->
+<div class="wd-overlay" id="scaleNameOverlay">
+  <div class="wd-dialog">
+    <div class="wd-dialog-title" style="color:var(--wd-gold);">Register scale</div>
+    <input class="wd-inp" id="scaleNameInp" type="text" placeholder="e.g. My Celtic D" maxlength="30">
+    <div class="wd-dialog-btns">
+      <button class="wd-btn-cancel" onclick="closeOverlay('scaleNameOverlay')">Cancel</button>
+      <button class="wd-btn-ok gold" onclick="doRegisterScale()">Register</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete user scale confirm -->
+<div class="wd-overlay" id="deleteScaleOverlay" onclick="event.stopPropagation()">
+  <div class="wd-dialog">
+    <div class="wd-dialog-title">Delete scale</div>
+    <div class="wd-dialog-msg" id="deleteScaleMsg">Delete this scale?</div>
+    <div class="wd-dialog-btns">
+      <button class="wd-btn-cancel" onclick="closeOverlay('deleteScaleOverlay')">Cancel</button>
+      <button class="wd-btn-ok" onclick="doDeleteScale()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 音名定義 ──────────────────────────────────────────────────
+const CD=['C','C#','D','E♭','E','F','F#','G','G#','A','B♭','B'];
+const CC=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+// ── スケール定義 ──────────────────────────────────────────────
+const _N = n => {
+  const m=n.match(/^([A-G]#?)(-?\d+)$/i);
+  if(!m)return 60;
+  const nn=m[1].charAt(0).toUpperCase()+m[1].slice(1);
+  return (parseInt(m[2])+1)*12+CC.indexOf(nn);
+};
+const SD_CALC={
+  'minor':            {root:9,oct:3,iv:[0,0,2,3,5,7,8,10,12]},
+  'minor-harmonic':   {root:11,oct:2,iv:[0,0,2,3,5,7,8,11,12]},
+  'major':            {root:0,oct:4,iv:[0,12,7,4,0,7,11,2,5]},
+  'major-pentatonic': {root:0,oct:3,iv:[0,14,4,9,12,12,2,16,7]},
+  'major-flat':       {root:9,oct:3,iv:[0,12,14,16,19,17,21,23,24]},
+  'lydian':           {root:5,oct:4,iv:[0,12,9,7,4,2,0,4,7]},
+  'phrygian':         {root:4,oct:4,iv:[0,0,1,3,5,7,8,10,12]},
+  'ionian':           {root:9,oct:3,iv:[0,14,7,10,3,12,5,15,8]},
+  'kurd-minor':       {root:2,oct:4,iv:[0,-5,-3,-7,-10,-11,-7,-5,-3]},
+  'celtic-minor':     {root:2,oct:4,iv:[0,7,5,0,-5,-7,2,4,9]},
+  'akebono-pentatonic':{root:7,oct:4,iv:[0,17,3,7,5,12,2,15,8]},
+  'annaziska':        {root:1,oct:4,iv:[0,6,3,-1,-5,-4,0,2,5]},
+};
+const SD_FIXED={
+  'pygmy-scale': [_N('C4'),_N('D#5'),_N('G4'),_N('C5'),_N('D4'),_N('D5'),_N('D#4'),_N('G5'),_N('A#4')],
+  'deep-sea':    [_N('A#2'),_N('F4'),_N('C4'),_N('F3'),_N('C3'),_N('D3'),_N('A3'),_N('E4'),_N('A4')],
+  'cloud':       [_N('A2'),_N('C4'),_N('A3'),_N('F3'),_N('C3'),_N('E3'),_N('G3'),_N('B3'),_N('E4')],
+  'celtic-2':    [_N('A2'),_N('A4'),_N('E4'),_N('C#4'),_N('A3'),_N('B2'),_N('F#3'),_N('B3'),_N('D4')],
+  'daze':        [_N('B2'),_N('F#4'),_N('C#4'),_N('A#3'),_N('D#3'),_N('F#3'),_N('B3'),_N('F4'),_N('G#4')],
+  'hijaz':       [_N('B2'),_N('F#4'),_N('D#4'),_N('B3'),_N('F#3'),_N('A3'),_N('C4'),_N('E4'),_N('A4')],
+  'kurd-2':      [_N('B2'),_N('E4'),_N('C#4'),_N('A3'),_N('F#3'),_N('G3'),_N('B3'),_N('D4'),_N('F#4')],
+  'voice':       [_N('C3'),_N('G4'),_N('D4'),_N('B3'),_N('E3'),_N('G3'),_N('C4'),_N('F#4'),_N('B4')],
+  'shade':       [_N('F2'),_N('F4'),_N('C4'),_N('G3'),_N('C3'),_N('F3'),_N('G#3'),_N('D#4'),_N('G4')],
+  // ── Microtonal ────────────────────────────────────────────────
+  // 全パッド+1oct、pad4のみ-2oct（結果pad4は元より-1oct）
+  'rast':        [_N('C4'),_N('G4'),_N('E4'),_N('C4'),_N('G3'),_N('D4'),_N('F4'),_N('B4'),_N('E5')],
+  'bayati':      [_N('D4'),_N('A4'),_N('F4'),_N('D4'),_N('A3'),_N('E4'),_N('G4'),_N('C5'),_N('F5')],
+  'saba':        [_N('D4'),_N('A4'),_N('F4'),_N('D4'),_N('G3'),_N('E4'),_N('F#4'),_N('C5'),_N('F5')],
+  'hicaz':       [_N('D4'),_N('A4'),_N('F#4'),_N('D4'),_N('A3'),_N('E4'),_N('G4'),_N('B4'),_N('F#5')],
+  'bhairav':     [_N('C4'),_N('G4'),_N('E4'),_N('C4'),_N('G3'),_N('D4'),_N('F4'),_N('A4'),_N('E5')],
+  'todi':        [_N('C4'),_N('G4'),_N('E4'),_N('C4'),_N('G3'),_N('D4'),_N('F#4'),_N('A4'),_N('E5')],
+  'darbari':     [_N('C4'),_N('G4'),_N('E4'),_N('C4'),_N('G3'),_N('D4'),_N('F4'),_N('A4'),_N('E5')],
+  'slendro':     [_N('C4'),_N('G4'),_N('E4'),_N('C5'),_N('G3'),_N('D4'),_N('A4'),_N('E5'),_N('G5')],
+  'pelog':       [_N('C4'),_N('G4'),_N('E4'),_N('C5'),_N('G3'),_N('D4'),_N('E4'),_N('A4'),_N('E5')],
+  'bali-pelog':  [_N('C4'),_N('G4'),_N('E4'),_N('C5'),_N('G3'),_N('D4'),_N('A4'),_N('E5'),_N('G5')],
+};
+
+// Microtonalスケールのcents定義 [pad0〜pad8]
+const MICROTONAL_CENTS={
+  'rast':       [0,  0, -50,   0,   0,   0,   0, -50, -50],
+  'bayati':     [0,  0,   0,   0,   0, -50,   0,   0,   0],
+  'saba':       [0,  0,   0,   0,   0, -50,   0,   0,   0],
+  'hicaz':      [0,  0, -20,   0,   0, +20,   0, +20, -20],
+  'bhairav':    [0,  0,   0,   0,   0, +15,   0, +15,   0],
+  'todi':       [0,  0,   0,   0,   0, -20,   0, -20, +20],
+  'darbari':    [0,  0, -30,   0,   0,   0,   0, -30, -30],
+  'slendro':    [0,-20, -30,   0, -20, +40, +30, -30, -20],
+  'pelog':      [0,-10, +30,   0, -10, +20, -30, +20, +30],
+  'bali-pelog': [0,+10, -20,   0, +10, +30, +30, -20, +10],
+};
+let userScales={};
+let pendingDeleteKey=null;
+
+// ── パッド配置 ────────────────────────────────────────────────
+const PAD_ORDER=[9,1,2,3,4,5,6,7,8];
+const PAD_GHOST=9;
+const ringAngle=i=>i*40-90;
+const padToRingIdx=p=>PAD_ORDER.indexOf(p);
+
+// ── 状態 ──────────────────────────────────────────────────────
+let connected=false;
+let dirty={scale:false,tuning:false,padTuning:new Array(9).fill(false)};
+let selScale='celtic-minor',transposeShift=0,octShift=0,rotShift=0;
+let customNotes=null,cents=[0,0,0,0,0,0,0,0,0];
+let activePad=null,popupPad=null,popupCloseTimer=null;
+let selPatch=0,selPreset=0;
+let lastMouseX=0,lastMouseY=0;
+
+// ── マウス位置追跡 ────────────────────────────────────────────
+document.addEventListener('mousemove',e=>{lastMouseX=e.clientX;lastMouseY=e.clientY;});
+
+// ── ユーティリティ ────────────────────────────────────────────
+const m2n=m=>CC[((m%12)+12)%12]+Math.floor(m/12-1);
+const n2m=n=>{
+  const mm=n.match(/^([A-G][#♭]?)(-?\d+)$/);
+  if(!mm)return 60;
+  let i=CD.indexOf(mm[1]);if(i<0)i=CC.indexOf(mm[1]);
+  return(parseInt(mm[2])+1)*12+i;
+};
+const disp=n=>{
+  const m=n.match(/^([A-G]#?)(-?\d+)$/);
+  if(!m)return n;
+  return CD[CC.indexOf(m[1])]+m[2];
+};
+const svgE=(t,a)=>{
+  const e=document.createElementNS('http://www.w3.org/2000/svg',t);
+  for(const k in a)e.setAttribute(k,a[k]);
+  return e;
+};
+
+// ── スケール計算 ──────────────────────────────────────────────
+function calcBase(){
+  // SD_FIXEDにはMicrotonalスケールのノートも含む（centsはMICROTONAL_CENTSで別管理）
+  if(SD_FIXED[selScale])return SD_FIXED[selScale].map(m2n);
+  if(userScales[selScale])return userScales[selScale].notes.map(m2n);
+  const d=SD_CALC[selScale];
+  if(!d)return Array(9).fill('C4');
+  const oct=d.oct+octShift;
+  const root=d.root+(oct+1)*12;
+  return d.iv.map(v=>m2n(root+v));
+}
+function getDisplay(){
+  let base=customNotes??calcBase();
+  if(transposeShift!==0)base=base.map(n=>m2n(n2m(n)+transposeShift));
+  if(rotShift!==0){
+    const ring=base.slice(1);
+    // +1で時計回り（pad1の音がpad2へ移動）= 末尾からrotShift個を先頭に
+    const rotated=[...ring.slice(-rotShift),...ring.slice(0,-rotShift)];
+    base=[base[0],...rotated];
+  }
+  return base;
+}
+
+// ── dirty管理 ─────────────────────────────────────────────────
+function isDirtyAny(){return dirty.scale||dirty.tuning||dirty.padTuning.some(Boolean);}
+function updateApplyBtn(){document.getElementById('applyBtn').classList.toggle('dirty',isDirtyAny());}
+function setDirtyScale(){dirty.scale=true;updateApplyBtn();}
+function setDirtyTuning(){dirty.tuning=true;updateApplyBtn();}
+function setDirtyPadTuning(i){dirty.padTuning[i]=true;updateApplyBtn();}
+function clearDirty(){dirty={scale:false,tuning:false,padTuning:new Array(9).fill(false)};updateApplyBtn();}
+
+// ── Scale controls ────────────────────────────────────────────
+function onScaleChange(){
+  selScale=document.getElementById('scSel').value;
+  customNotes=null;transposeShift=0;rotShift=0;
+  document.getElementById('transposeSlider').value=0;
+  document.getElementById('transposeDisp').textContent='0 st';
+  document.getElementById('rotSlider').value=0;
+  document.getElementById('rotVal').textContent='+0';
+  setDirtyScale();drawLabels();
+}
+function onTranspose(v){
+  transposeShift=parseInt(v);
+  document.getElementById('transposeDisp').textContent=(v>0?'+':'')+v+' st';
+  setDirtyScale();drawLabels();
+}
+function onOctSlider(v){
+  const delta=parseInt(v)-octShift;
+  // customNotesがない場合は現在の表示状態を確定してから変換
+  if(!customNotes)customNotes=[...getDisplay()];
+  customNotes=customNotes.map(n=>m2n(n2m(n)+delta*12));
+  octShift=parseInt(v);
+  setDirtyScale();drawLabels();
+}
+function resetFineTune(){
+  document.getElementById('tunFineSlider').value=0;
+  document.getElementById('hzFineDisp').textContent='';
+  setDirtyTuning();
+}
+function onTun(){
+  const c=parseInt(document.getElementById('tunSlider').value);
+  const f=parseInt(document.getElementById('tunFineSlider').value)/100;
+  document.getElementById('hzDisp').textContent=c;
+  document.getElementById('hzFineDisp').textContent=f!==0?(f>0?'+':'')+f.toFixed(2):'';
+  setDirtyTuning();
+}
+function onRotation(v){
+  rotShift=parseInt(v);
+  document.getElementById('rotVal').textContent='+'+v;
+  setDirtyScale();drawLabels();
+}
+let flipActive=false;
+function flipScale(){
+  // getDisplay()ベース（rotation適用済み）でflip
+  // customNotesに焼き込んでrotShiftはリセットしない
+  const notes=getDisplay();
+  const ring=notes.slice(1);
+  customNotes=[notes[0],...ring.reverse()];
+  rotShift=0; // rotation焼き込み済みなのでスライダーは0へ（表示のみ）
+  document.getElementById('rotSlider').value=0;
+  document.getElementById('rotVal').textContent='+0';
+  flipActive=!flipActive;
+  document.getElementById('flipBtn').classList.toggle('active',flipActive);
+  setDirtyScale();drawLabels();
+}
+
+// ── User scale ────────────────────────────────────────────────
+function openScaleNamePopup(){
+  document.getElementById('scaleNameInp').value='';
+  document.getElementById('scaleNameOverlay').classList.add('show');
+  setTimeout(()=>document.getElementById('scaleNameInp').focus(),100);
+}
+function doRegisterScale(){
+  const name=document.getElementById('scaleNameInp').value.trim();
+  if(!name){addLog('Enter a name','error');return;}
+  const notes=getDisplay().map(n2m);
+  const savedCents=[...cents]; // 現在のパッドセント値をコピー
+  const key='user_'+Date.now();
+  userScales[key]={name, notes, cents:savedCents};
+  // カスタムDDにアイテム追加
+  const userGroup=document.getElementById('userGroup');
+  userGroup.style.display='';
+  const list=document.getElementById('scaleList');
+  const item=document.createElement('div');
+  item.className='wd-scale-item';
+  item.dataset.val=key;
+  item.id='usl_'+key;
+  item.innerHTML=`<span class="wd-scale-item-name">${name}</span><button class="wd-scale-item-del" onclick="event.stopPropagation();confirmDeleteScale('${key}','${name.replace(/'/g,"\\'")}')">×</button>`;
+  item.addEventListener('click',()=>selectScaleItem(key,name));
+  list.appendChild(item);
+  // 選択
+  selScale=key;
+  customNotes=notes.map(m2n);
+  document.getElementById('scaleBtn').textContent=name;
+  document.querySelectorAll('.wd-scale-item').forEach(el=>el.classList.toggle('sel',el.dataset.val===key));
+  closeOverlay('scaleNameOverlay');
+  addLog('Scale "'+name+'" registered','ok');
+  drawLabels();
+  window.pywebview.api.save_user_scales(userScales);
+}
+function addUserScaleItem(key,name){}
+function confirmDeleteScale(key,name){
+  pendingDeleteKey=key;
+  document.getElementById('deleteScaleMsg').textContent='Delete "'+name+'"?';
+  document.getElementById('deleteScaleOverlay').classList.add('show');
+}
+function doDeleteScale(){
+  if(!pendingDeleteKey)return;
+  // まずオーバーレイを即座に非表示
+  const overlay=document.getElementById('deleteScaleOverlay');
+  overlay.classList.remove('show');
+  // 次のフレームで処理（DOMの更新を確実に）
+  requestAnimationFrame(()=>{
+    const key=pendingDeleteKey;
+    pendingDeleteKey=null;
+    const item=document.getElementById('usl_'+key);
+    if(item)item.remove();
+    delete userScales[key];
+    if(Object.keys(userScales).length===0){
+      document.getElementById('userGroup').style.display='none';
+    }
+    if(selScale===key){
+      selectScaleItem('celtic-minor','Celtic Minor');
+      customNotes=null;drawLabels();
+    }
+    addLog('Scale deleted','ok');
+    window.pywebview.api.save_user_scales(userScales);
+  });
+}
+
+// ── ファクトリープリセット ─────────────────────────────────────
+const _ns=(...a)=>a.map(_N);
+const FACTORY_PRESETS={
+  metal0:[_ns('D3','A4','F4','D4','A3','C4','E4','G4','C5'),_ns('C3','F4','D4','A#3','G3','G#3','C4','D#4','G4'),_ns('F3','B4','G4','E4','C4','D4','F4','A4','C5')],
+  metal1:[_ns('C#3','F#4','D#4','B3','G#3','A3','C#4','E4','G#4'),_ns('D#3','A4','F4','D4','A#3','C4','D#4','G4','A#4'),_ns('F3','A#4','G4','D#4','C4','C#4','F4','G#4','C5')],
+  metal2:[_ns('D3','G4','E4','C4','A3','A#3','D4','F4','A4'),_ns('C#3','G4','D#4','C4','G#3','A#3','C#4','F4','G#4'),_ns('F2','F4','C4','A3','F3','C3','E3','G3','A#3'),_ns('G2','C#4','A3','F#3','D3','E3','G3','B3','D4')],
+  metal3:[_ns('G3','D5','D#4','G#4','C4','C5','D4','D#5','G4')],
+  metal4:[_ns('G3','D5','D#4','G4','C4','C5','D4','D#5','F4')],
+  metal5:[_ns('C4','D#5','G4','C5','D4','D5','D#4','G5','A#4')],
+  metal6:[_ns('C3','C5','G4','E4','C4','G3','B3','D4','F4'),_ns('F2','F4','C4','A3','F3','C3','E3','G3','A#3'),_ns('E2','E4','D4','B3','G3','E3','F3','A3','C4')],
+  metal7:[_ns('B1','B2','C#3','D3','E3','F#3','G3','A#3','B3'),_ns('F#1','F#2','G#2','A#2','B2','C#3','D3','E3','F#3'),_ns('B0','B1','C#2','D2','E2','F#2','G2','A#2','B2')],
+  metal8:[_ns('A4','A5','B5','C6','D6','E6','F6','G#6','A6'),_ns('E4','E5','F5','G5','A5','B5','C6','D6','E6'),_ns('F4','F5','G5','A5','B5','C6','D6','E6','F6'),_ns('A3','A4','B4','C#5','D5','E5','F5','G5','A5')],
+  metal9:[_ns('A3','B4','E4','G4','C4','A4','D4','C5','F4'),_ns('A3','D5','E4','A4','C4','C5','D4','E5','G4')],
+  metal10:[_ns('A1','A2','B2','C3','D3','E3','F3','G#3','A3'),_ns('E2','E3','F#3','G#3','A3','B3','C4','D4','E4'),_ns('F2','F3','G3','A3','B3','C4','D4','E4','F4'),_ns('A2','A3','B3','C4','D4','E4','F4','G#4','A4')],
+  wood0:[_ns('A2','A3','B3','C4','D4','E4','F4','G4','A4')],
+  wood1:[_ns('A2','A3','B3','C4','D4','E4','F4','G#4','A4')],
+  wood2:[_ns('A1','A2','B2','C3','D3','E3','F3','G3','A3')],
+  wood3:[_ns('A1','A2','B2','C3','D3','E3','F3','G#3','A3')],
+  wood4:[_ns('A0','A1','B1','C2','D2','E2','F2','G2','A2'),_ns('A1','A2','B2','C3','D3','E3','F3','G3','A3'),_ns('A0','A1','B1','C2','D2','E2','F2','G#2','A2'),_ns('A1','A2','B2','C3','D3','E3','F3','G#3','A3')],
+  reverb:[_ns('A3','A4','B4','C5','D5','E5','F5','G#5','A5'),_ns('E3','E4','F#4','G#4','A4','B4','C5','D5','E5'),_ns('F3','F4','G4','A4','B4','C5','D5','E5','F5'),_ns('A2','A3','B3','C4','D4','E4','F4','G#4','A4'),_ns('A1','A2','B2','C3','D3','E3','F3','G#3','A3')],
+};
+const patchKey=idx=>idx<11?'metal'+idx:idx<16?'wood'+(idx-11):'reverb';
+function loadFactorySlot(patchIdx,slotIdx){
+  const slots=FACTORY_PRESETS[patchKey(patchIdx)];
+  if(!slots||!slots[slotIdx])return;
+  customNotes=slots[slotIdx].map(m2n);
+  drawLabels();
+}
+
+// ── Patch ─────────────────────────────────────────────────────
+function buildPatchDots(){
+  const md=document.getElementById('metalDots');
+  const wd=document.getElementById('woodDots');
+  md.innerHTML='';wd.innerHTML='';
+  for(let i=0;i<11;i++){
+    const d=document.createElement('div');
+    d.className='pdot'+(selPatch===i?' sel':'');
+    d.onclick=()=>selectPatch(i);
+    md.appendChild(d);
+  }
+  for(let i=0;i<5;i++){
+    const d=document.createElement('div');
+    d.className='pdot'+(selPatch===11+i?' sel':'');
+    d.onclick=()=>selectPatch(11+i);
+    wd.appendChild(d);
+  }
+}
+async function selectPatch(idx){
+  selPatch=idx;buildPatchDots();
+  const grp=idx<11?'metal':idx<16?'wood':'reverb';
+  const num=idx<11?idx:idx<16?idx-11:0;
+  const cmd=grp==='reverb'?'SET_PATCH:reverb':`SET_PATCH:${grp},${num}`;
+  addLog(`patch → ${grp} ${grp!=='reverb'?num+1:''}`);
+  // パッチ切り替え時はcentsをリセット
+  cents=new Array(9).fill(0);
+  loadFactorySlot(idx,0);
+  if(!connected){addLog('[dry-run] '+cmd);return;}
+  const r=await window.pywebview.api.send_command(cmd);
+  if(!r.ok){addLog('ERR: '+cmd,'error');return;}
+  await new Promise(res=>setTimeout(res,700));
+  const rs=await window.pywebview.api.send_command('GET_SCALE');
+  if(rs.ok&&rs.response.startsWith('OK:')){
+    const midis=rs.response.replace('OK:','').split(',').map(Number);
+    customNotes=midis.map(m2n);drawLabels();addLog('scale loaded');
+  }
+}
+
+// ── SVG ───────────────────────────────────────────────────────
+// hit pads: r=115は変えない（当たり判定はそのまま）
+
+// ── ドラッグ&ドロップ state ───────────────────────────────────
+let dragState=null; // {padNum, noteText, ghostEl, overPad}
+
+function svgPoint(svg, e){
+  // マウス座標をSVG座標系に変換
+  const pt=svg.createSVGPoint();
+  pt.x=e.clientX; pt.y=e.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+function startPadDrag(padNum, noteText, e){
+  e.preventDefault();
+  e.stopPropagation();
+  const svg=document.getElementById('drumSvg');
+  // ゴースト要素（カーソルに追従する音名）
+  const ghost=svgE('text',{
+    class:'pad-note-name',
+    'text-anchor':'middle',
+    'dominant-baseline':'middle',
+    style:'pointer-events:none;opacity:0.7;font-size:20px;fill:var(--wd-gold);paint-order:stroke fill;stroke:rgba(0,0,0,0.5);stroke-width:3px;'
+  });
+  ghost.textContent=noteText;
+  svg.appendChild(ghost);
+  dragState={padNum, noteText, ghostEl:ghost, overPad:null};
+
+  const onMove=ev=>{
+    if(!dragState)return;
+    const p=svgPoint(svg,ev);
+    dragState.ghostEl.setAttribute('x',p.x);
+    dragState.ghostEl.setAttribute('y',p.y-16);
+
+    // どのラベル背景円の上にいるか判定（pad1〜8のみ）
+    let hit=null;
+    for(let ri=0;ri<PAD_ORDER.length;ri++){
+      const pn=PAD_ORDER[ri];
+      if(pn===PAD_GHOST||pn===dragState.padNum)continue;
+      const a=ringAngle(ri)*Math.PI/180;
+      const lcx=Math.cos(a)*LABEL_R, lcy=Math.sin(a)*LABEL_R;
+      const dx=p.x-lcx, dy=p.y-lcy;
+      if(Math.sqrt(dx*dx+dy*dy)<32){hit=pn;break;}
+    }
+    // ハイライト更新
+    if(dragState.overPad!==hit){
+      if(dragState.overPad!==null)
+        document.getElementById('pg-'+dragState.overPad)?.querySelector('.pad-label-bg')?.classList.remove('drag-over');
+      if(hit!==null)
+        document.getElementById('pg-'+hit)?.querySelector('.pad-label-bg')?.classList.add('drag-over');
+      dragState.overPad=hit;
+    }
+  };
+
+  const onUp=ev=>{
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onUp);
+    if(!dragState)return;
+    const target=dragState.overPad;
+    const from=dragState.padNum;
+    dragState.ghostEl.remove();
+    if(target!==null)
+      document.getElementById('pg-'+target)?.querySelector('.pad-label-bg')?.classList.remove('drag-over');
+    dragState=null;
+
+    if(target===null||target===from)return;
+
+    // ── getDisplay()ベースで並び替え ──────────────────────────
+    // rotation/transpose適用済みの表示状態をそのままcustomNotesに焼き込む
+    const displayed=getDisplay(); // pad0〜8インデックスの配列
+    const ring=[1,2,3,4,5,6,7,8].map(p=>displayed[p]);
+    const fi=from-1;
+    const ti=target-1;
+    const [moved]=ring.splice(fi,1);
+    ring.splice(ti,0,moved);
+    // rotationはcustomNotesに焼き込まれるのでリセット
+    customNotes=[displayed[0],...ring];
+    rotShift=0;
+    document.getElementById('rotSlider').value=0;
+    document.getElementById('rotVal').textContent='+0';
+    // centsも表示順で並び替え
+    const cRing=[1,2,3,4,5,6,7,8].map(p=>cents[p]);
+    const [movedC]=cRing.splice(fi,1);
+    cRing.splice(ti,0,movedC);
+    cents=[cents[0],...cRing];
+    setDirtyScale();drawLabels();
+    addLog(`pad${from} → pad${target} (reordered)`,'ok');
+  };
+
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onUp);
+}
+
+function buildPadGroups(){
+  // pad-groupsを構築。hitエリア＋ラベル背景円＋テキストを1つのgにまとめ
+  // drawLabelsも兼ねる
+  const root=document.getElementById('padGroups');
+  root.innerHTML='';
+  const notes=getDisplay();
+
+  // pad0: 中央
+  {
+    const grp=svgE('g',{class:'pad-group',id:'pg-0'});
+    // hit area: 中央円
+    const hit=svgE('circle',{cx:0,cy:0,r:32,class:'pad-hit-area'});
+    grp.appendChild(hit);
+    // label bg
+    const bgR=cents[0]!==0?28:24;
+    const bg=svgE('circle',{cx:0,cy:0,r:bgR,class:'pad-label-bg'});
+    grp.appendChild(bg);
+    // note text
+    const t=svgE('text',{x:0,y:cents[0]!==0?-5:0,class:'pad-note-name'});
+    t.textContent=disp(notes[0]||'—');grp.appendChild(t);
+    if(cents[0]!==0){
+      const c=svgE('text',{x:0,y:9,class:'pad-note-cent'});
+      c.textContent=(cents[0]>=0?'+':'')+cents[0]+'¢';grp.appendChild(c);
+    }
+    grp.addEventListener('click',e=>clickPad(0,e));
+    root.appendChild(grp);
+  }
+
+  // pad1〜8
+  for(let ri=0;ri<9;ri++){
+    const padNum=PAD_ORDER[ri];
+    if(padNum===PAD_GHOST)continue;
+    const a=ringAngle(ri)*Math.PI/180;
+    const hcx=Math.cos(a)*115, hcy=Math.sin(a)*115; // hit center
+    const lcx=Math.cos(a)*LABEL_R, lcy=Math.sin(a)*LABEL_R; // label center
+
+    const grp=svgE('g',{class:'pad-group',id:'pg-'+padNum});
+
+    // hit area: 楕円（元の当たり判定）
+    const angle=ringAngle(padToRingIdx(padNum));
+    const hit=svgE('ellipse',{cx:hcx,cy:hcy,rx:52,ry:70,
+      transform:`rotate(${angle+90} ${hcx} ${hcy})`,
+      class:'pad-hit-area'});
+    grp.appendChild(hit);
+
+    // label bg circle
+    const hasCent=cents[padNum]!==0;
+    const bgR=hasCent?28:24;
+    const bg=svgE('circle',{cx:lcx,cy:lcy,r:bgR,class:'pad-label-bg',style:'cursor:grab;'});
+    bg.addEventListener('mousedown',e=>{
+      if(e.button!==0)return; // 左クリックのみ
+      startPadDrag(padNum, disp(notes[padNum]||'—'), e);
+    });
+    grp.appendChild(bg);
+
+    // note text
+    const t=svgE('text',{x:lcx,y:hasCent?lcy-5:lcy,class:'pad-note-name',style:'cursor:grab;'});
+    t.textContent=disp(notes[padNum]||'—');grp.appendChild(t);
+    t.addEventListener('mousedown',e=>{
+      if(e.button!==0)return;
+      startPadDrag(padNum, disp(notes[padNum]||'—'), e);
+    });
+    if(hasCent){
+      const c=svgE('text',{x:lcx,y:lcy+9,class:'pad-note-cent'});
+      c.textContent=(cents[padNum]>=0?'+':'')+cents[padNum]+'¢';grp.appendChild(c);
+    }
+
+    grp.addEventListener('click',e=>clickPad(padNum,e));
+    root.appendChild(grp);
+  }
+}
+
+// ラベル・背景円: r=240付近（現プリセットボタン位置）
+const LABEL_R=240;
+const LABEL_BG_R=22; // 背景白円の半径
+function drawLabels(){
+  buildPadGroups();
+}
+
+// ── Popup: マウス位置に表示 ────────────────────────────────────
+function clickPad(n,e){
+  if(activePad!==null)document.getElementById('pg-'+activePad)?.classList.remove('active');
+  activePad=n;
+  document.getElementById('pg-'+n)?.classList.add('active');
+  openPopup(n,e);
+}
+function openPopup(n,e){
+  clearTimeout(popupCloseTimer);
+  popupPad=n;
+  const pp=document.getElementById('padPopup');
+  const notes=getDisplay();
+
+  // マウス位置基準（fixed positioning）
+  const mx=e?e.clientX:lastMouseX;
+  const my=e?e.clientY:lastMouseY;
+  const pw=210,ph=130;
+  const vw=window.innerWidth,vh=window.innerHeight;
+  let left=mx+12,top=my-ph/2;
+  if(left+pw>vw-8)left=mx-pw-12;
+  if(top<8)top=8;
+  if(top+ph>vh-8)top=vh-ph-8;
+  pp.style.left=left+'px';pp.style.top=top+'px';
+
+  document.getElementById('ppTitle').textContent='Pad '+n+' — '+disp(notes[n]||'—');
+  document.getElementById('ppCent').value=cents[n];
+  document.getElementById('ppCentVal').textContent=(cents[n]>=0?'+':'')+cents[n]+'¢';
+
+  const nameEl=document.getElementById('ppNoteName');nameEl.innerHTML='';
+  const curNote=notes[n]||'C4';
+  const curName=curNote.replace(/-?\d+$/,'');
+  CD.forEach((nm,idx)=>{
+    const opt=document.createElement('option');
+    opt.value=CC[idx];opt.textContent=nm;
+    if(CC[idx]===curName||nm===curName)opt.selected=true;
+    nameEl.appendChild(opt);
+  });
+  const octEl=document.getElementById('ppNoteOct');octEl.innerHTML='';
+  const curOct=parseInt(curNote.match(/-?\d+$/)?.[0]??'4');
+  for(let o=-1;o<=8;o++){
+    const opt=document.createElement('option');
+    opt.value=o;opt.textContent=o;
+    if(o===curOct)opt.selected=true;
+    octEl.appendChild(opt);
+  }
+  pp.classList.add('show');
+  pp.onmouseleave=()=>{popupCloseTimer=setTimeout(closePopup,300);};
+  pp.onmouseenter=()=>{clearTimeout(popupCloseTimer);};
+}
+function ppNoteChange(){
+  const name=document.getElementById('ppNoteName').value;
+  const oct=document.getElementById('ppNoteOct').value;
+  const newNote=name+oct;
+  if(!customNotes)customNotes=[...getDisplay()];
+  customNotes[popupPad]=newNote;
+  setDirtyScale();drawLabels();
+  document.getElementById('ppTitle').textContent='Pad '+popupPad+' — '+disp(newNote);
+}
+function ppCentUpd(v){
+  cents[popupPad]=parseInt(v);
+  document.getElementById('ppCentVal').textContent=(v>=0?'+':'')+v+'¢';
+  setDirtyPadTuning(popupPad);drawLabels();
+}
+function closePopup(){
+  document.getElementById('padPopup').classList.remove('show');
+  if(activePad!==null){document.getElementById('pg-'+activePad)?.classList.remove('active');activePad=null;}
+  popupPad=null;
+}
+
+// ── Preset buttons: r=265（音名より外側）────────────────────────
+const PRESET_R=290;
+function buildPresetBtns(){
+  const g=document.getElementById('presetBtns');g.innerHTML='';
+  for(let ri=0;ri<9;ri++){
+    if(ri===0)continue;
+    const slot=ri-1;
+    const a=ringAngle(ri)*Math.PI/180;
+    const x=Math.cos(a)*PRESET_R,y=Math.sin(a)*PRESET_R;
+    const grp=svgE('g',{});grp.style.cursor='pointer';
+    grp.addEventListener('click',()=>selectPreset(slot));
+    const c=svgE('circle',{cx:x,cy:y,r:16,
+      class:'preset-circle'+(slot===selPreset?' sel':''),id:'pc-'+slot});
+    grp.appendChild(c);
+    const t=svgE('text',{x,y:y+1,
+      class:'preset-num'+(slot===selPreset?' sel':''),id:'pt-'+slot});
+    t.textContent=slot+1;grp.appendChild(t);
+    g.appendChild(grp);
+  }
+}
+async function selectPreset(i){
+  selPreset=i;
+  for(let j=0;j<8;j++){
+    document.getElementById('pc-'+j)?.classList.toggle('sel',j===i);
+    document.getElementById('pt-'+j)?.classList.toggle('sel',j===i);
+  }
+  addLog('Slot '+(i+1)+' selected'+(connected?' + reading...':' (offline)'));
+  if(connected){
+    const r=await window.pywebview.api.send_command('GET_SCALE');
+    if(r.ok&&r.response.startsWith('OK:')){
+      const midis=r.response.replace('OK:','').split(',').map(Number);
+      customNotes=midis.map(m2n);drawLabels();addLog('slot loaded');
+    }
+  }else{
+    loadFactorySlot(selPatch,i);
+  }
+}
+
+// ── Apply ─────────────────────────────────────────────────────
+async function applyAll(){
+  const notes=getDisplay();
+  const midis=notes.map(n2m);
+  const c=parseInt(document.getElementById('tunSlider').value);
+  const f=parseInt(document.getElementById('tunFineSlider').value)/100;
+  if(!connected){
+    if(dirty.scale)addLog('[dry-run] SET_SCALE_NOTES:'+selPreset+','+midis.join(','));
+    if(dirty.tuning)addLog('[dry-run] SET_TUNING:'+(c+f).toFixed(2));
+    dirty.padTuning.forEach((v,i)=>{if(v)addLog('[dry-run] SET_PAD_TUNING:'+i+','+cents[i]);});
+    clearDirty();return;
+  }
+  document.getElementById('applyBtn').disabled=true;
+  const cmds=[];
+  if(dirty.scale)cmds.push('SET_SCALE_NOTES:'+selPreset+','+midis.join(','));
+  if(dirty.tuning)cmds.push('SET_TUNING:'+(c+f).toFixed(2));
+  dirty.padTuning.forEach((v,i)=>{if(v)cmds.push('SET_PAD_TUNING:'+i+','+cents[i]);});
+  for(const cmd of cmds){
+    const r=await window.pywebview.api.send_command(cmd);
+    if(!r.ok){addLog('ERR: '+cmd,'error');break;}
+  }
+  document.getElementById('applyBtn').disabled=false;
+  clearDirty();
+}
+
+// ── Reset ─────────────────────────────────────────────────────
+function confirmReset(){document.getElementById('resetOverlay').classList.add('show');}
+async function doReset(){
+  closeOverlay('resetOverlay');
+  const slots=FACTORY_PRESETS[patchKey(selPatch)];
+  if(!slots){addLog('No factory data','error');return;}
+  addLog('Resetting...');
+  if(!connected){
+    slots.forEach((notes,si)=>addLog('[dry-run] SET_SCALE_NOTES:'+si+','+notes.join(',')));
+    loadFactorySlot(selPatch,selPreset);
+    cents=new Array(9).fill(0);clearDirty();drawLabels();
+    addLog('Reset done (dry-run)');return;
+  }
+  document.getElementById('applyBtn').disabled=true;
+  for(let si=0;si<slots.length;si++){
+    const cmd='SET_SCALE_NOTES:'+si+','+slots[si].join(',');
+    const r=await window.pywebview.api.send_command(cmd);
+    if(!r.ok){addLog('ERR: '+cmd,'error');break;}
+  }
+  for(let i=0;i<9;i++){if(cents[i]!==0)await window.pywebview.api.send_command('SET_PAD_TUNING:'+i+',0');}
+  cents=new Array(9).fill(0);
+  loadFactorySlot(selPatch,selPreset);
+  clearDirty();drawLabels();
+  document.getElementById('applyBtn').disabled=false;
+  addLog('Factory reset done','ok');
+}
+
+// ── Connect ───────────────────────────────────────────────────
+async function toggleConn(){
+  if(connected){
+    await window.pywebview.api.disconnect();pyOnDisconnected();
+  }else{
+    const port=document.getElementById('comSel').value;
+    if(!port){addLog('No port selected','error');return;}
+    document.getElementById('connBtn').disabled=true;
+    addLog('Connecting to '+port+' ...');
+    const r=await window.pywebview.api.connect(port);
+    document.getElementById('connBtn').disabled=false;
+    if(r.ok){
+      pyOnConnected(port);
+      const state=await window.pywebview.api.get_initial_state();
+      pyOnInitialState(state);
+    }else{addLog('Failed: '+(r.error||'unknown'),'error');}
+  }
+}
+
+// ── Python callbacks ───────────────────────────────────────────
+window.pyOnPortsScanned=function(ports){
+  const sel=document.getElementById('comSel');sel.innerHTML='';
+  if(!ports.length){sel.innerHTML='<option value="">No ports</option>';addLog('No COM ports','error');return;}
+  ports.forEach(p=>{
+    const opt=document.createElement('option');
+    opt.value=p.port;opt.textContent=p.port+(p.wingdrum?' ★':'');
+    if(p.wingdrum)opt.selected=true;sel.appendChild(opt);
+  });
+  addLog('Ports: '+ports.map(p=>p.port+(p.wingdrum?' ★':'')).join(', '));
+};
+window.pyOnConnected=function(port){
+  connected=true;
+  document.getElementById('dot').classList.add('on');
+  document.getElementById('connLbl').textContent='Connected';
+  document.getElementById('connLbl').classList.add('on');
+  document.getElementById('connBtn').textContent='Disconnect';
+  addLog('Connected to '+port,'ok');
+};
+window.pyOnDisconnected=function(){
+  connected=false;
+  document.getElementById('dot').classList.remove('on');
+  document.getElementById('connLbl').textContent='Disconnected';
+  document.getElementById('connLbl').classList.remove('on');
+  document.getElementById('connBtn').textContent='Connect';
+  addLog('Disconnected');
+};
+window.pyOnInitialState=function(state){
+  const tuning=state['GET_TUNING'];
+  if(tuning&&tuning.startsWith('OK:')){
+    const hz=parseFloat(tuning.replace('OK:',''));
+    const base=Math.round(hz),fine=Math.round((hz-base)*100);
+    document.getElementById('tunSlider').value=base;
+    document.getElementById('tunFineSlider').value=fine;
+    document.getElementById('hzDisp').textContent=base;
+    document.getElementById('hzFineDisp').textContent=fine!==0?(fine>0?'+':'')+fine/100:'';
+  }
+  const patch=state['GET_PATCH'];
+  if(patch&&patch.startsWith('OK:')){
+    const[type,num]=patch.replace('OK:','').split(',');
+    selPatch=type==='metal'?parseInt(num):type==='wood'?11+parseInt(num):16;
+    buildPatchDots();
+  }
+  const scale=state['GET_SCALE'];
+  if(scale&&scale.startsWith('OK:')){
+    const midis=scale.replace('OK:','').split(',').map(Number);
+    customNotes=midis.map(m2n);drawLabels();
+  }
+  clearDirty();addLog('Initial state loaded');
+};
+window.pyRestoreUserScales=function(data){
+  const userGroup=document.getElementById('userGroup');
+  const list=document.getElementById('scaleList');
+  Object.entries(data).forEach(([key,val])=>{
+    let name, notes, savedCents;
+    if(Array.isArray(val)){
+      // 旧形式: notesのみ
+      name = key.replace('user_','Scale ');
+      notes = val;
+      savedCents = new Array(9).fill(0);
+    } else {
+      name = val.name;
+      notes = val.notes;
+      savedCents = val.cents || new Array(9).fill(0);
+    }
+    userScales[key] = {name, notes, cents:savedCents};
+    userGroup.style.display='';
+    const item=document.createElement('div');
+    item.className='wd-scale-item';
+    item.dataset.val=key;
+    item.id='usl_'+key;
+    item.innerHTML=`<span class="wd-scale-item-name">${name}</span><button class="wd-scale-item-del" onclick="event.stopPropagation();confirmDeleteScale('${key}','${name.replace(/'/g,"\\'")}')">×</button>`;
+    item.addEventListener('click',()=>selectScaleItem(key,name));
+    list.appendChild(item);
+  });
+  if(Object.keys(data).length>0) addLog('User scales restored','ok');
+};
+window.pyLog=function(msg,level){addLog(msg,level);};
+
+// ── Log ───────────────────────────────────────────────────────
+function addLog(msg,level='info'){
+  const b=document.getElementById('logBox');
+  const d=document.createElement('div');
+  const cls=level==='ok'?'log-ok':level==='error'?'log-err':'';
+  d.innerHTML='<span class="log-ts">'+new Date().toTimeString().slice(0,8)+'</span><span class="'+(cls||'')+'">'+msg+'</span>';
+  b.appendChild(d);b.scrollTop=b.scrollHeight;
+}
+
+// ── Theme + image switch ───────────────────────────────────────
+let isDark=false;
+function setTheme(dark){
+  isDark=dark;
+  document.getElementById('wdRoot').classList.toggle('light-mode',!dark);
+  document.getElementById('tDark').classList.toggle('active',dark);
+  document.getElementById('tLight').classList.toggle('active',!dark);
+  document.getElementById('wdImg').setAttribute('href',dark?'wd_bk.png':'wd_wh.png');
+}
+
+// ── Overlay helper ─────────────────────────────────────────────
+function closeOverlay(id){document.getElementById(id).classList.remove('show');}
+
+
+// ── カスタムスケールドロップダウン ────────────────────────────
+function toggleScaleDd(e){
+  e.stopPropagation();
+  document.getElementById('scaleList').classList.toggle('open');
+}
+document.addEventListener('click',()=>{
+  document.getElementById('scaleList')?.classList.remove('open');
+});
+
+function selectScaleItem(val,label){
+  document.querySelectorAll('.wd-scale-item').forEach(el=>{
+    el.classList.toggle('sel', el.dataset.val===val);
+  });
+  document.getElementById('scaleBtn').textContent=label;
+  document.getElementById('scaleList').classList.remove('open');
+  selScale=val;
+  customNotes=null;transposeShift=0;rotShift=0;
+  document.getElementById('transposeSlider').value=0;
+  document.getElementById('transposeDisp').textContent='0 st';
+  document.getElementById('rotSlider').value=0;
+  document.getElementById('rotVal').textContent='+0';
+  // flipリセット
+  flipActive=false;
+  document.getElementById('flipBtn').classList.remove('active');
+  // userScalesならcentsも復元、それ以外は0リセット
+  if(userScales[val]&&userScales[val].cents){
+    cents=userScales[val].cents.slice();
+  } else if(MICROTONAL_CENTS[val]){
+    cents=MICROTONAL_CENTS[val].slice();
+  } else {
+    cents=new Array(9).fill(0);
+  }
+  setDirtyScale();drawLabels();
+}
+
+// ── Init ──────────────────────────────────────────────────────
+buildPatchDots();
+buildPresetBtns();
+buildPadGroups();
+loadFactorySlot(0,0);
+</script>
+
+</body>
+</html>
