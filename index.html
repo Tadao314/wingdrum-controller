@@ -56,7 +56,10 @@ button.wb:disabled{opacity:0.4;cursor:not-allowed;}
 .wd-plabel{font-size:11px;color:var(--wd-text3);margin-bottom:3px;letter-spacing:0.06em;}
 select.wd-sscale{width:100%;font-size:12px;padding:5px 6px;border-radius:7px;border:0.5px solid var(--wd-border);background:var(--wd-bg);color:var(--wd-text);margin-bottom:5px;cursor:pointer;}
 .wd-patch-section{margin-bottom:6px;}
-.wd-patch-type-label{font-size:10px;color:var(--wd-text3);margin-bottom:3px;}
+.wd-patch-type-label{font-size:10px;color:var(--wd-text3);margin-bottom:3px;display:flex;align-items:center;gap:4px;}
+.wd-reverb-lock{background:none;border:none;cursor:pointer;font-size:11px;padding:0;line-height:1;opacity:0.7;}
+.wd-reverb-lock:hover{opacity:1;}
+.wd-patch-dots.locked{opacity:0.35;pointer-events:none;}
 .wd-patch-dots{display:flex;gap:3px;flex-wrap:wrap;}
 .pdot{width:12px;height:12px;border-radius:50%;border:1px solid var(--wd-border);background:transparent;cursor:pointer;transition:all 0.12s;}
 .pdot:hover{border-color:var(--wd-gold-dim);}
@@ -268,6 +271,13 @@ input.wd-inp{width:100%;font-size:13px;padding:7px 10px;border-radius:7px;border
       <div class="wd-patch-type-label">Wood (1–5)</div>
       <div class="wd-patch-dots" id="woodDots"></div>
     </div>
+    <div class="wd-patch-section">
+      <div class="wd-patch-type-label">
+        Polyphonic Reverb
+        <button class="wd-reverb-lock" id="reverbLockBtn" onclick="toggleReverbLock()" title="Lock/Unlock Polyphonic Reverb"><img id="reverbLockImg" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAACoElEQVR4nLWUO0xUURCG/znn7i6LPESNjYWPwkSDiSYIFhZqZW3CaqNSaKGtxkKLRYk8JIqJCdqIEgvDXcTKQmhIUAQkwaBAIKCywWh4hPcud89jLBYiwopQ8FeTmfm/mXNycoA15LquXE9uXQqHw2IxzLpdWno0XF6eDyBrRW1jsMqHjy6+b+v42T84xANDX7m14+Ove1VVlzcEXTrS3YqKk929fdzyoZ0fP615/aTmeX3zu1bu+tzDJWWVp5b3rilmlgBQ96qhvmdg0N4M37mwVLtVXHK+u6/fvozUNyzvXa5Ua1t2CyU5ct/34WH6MTbUyNzpY+70jYwONkWjURKObw+7hRKA/S9QSMkUipiJsdnE5NSsra1+a4jyFFGeqq1uUlPT83Z8fNqjUMQIKXmln5bHzEDxCQTOFh16IHYePKd0Wnq6mOwCcwIAGOyP87YjAd/CnBntrWt79uVaUTM8SlIYAJwlmutCEME03sg8fCA3eAWZ44AmILjlGIIyOTuugdgI4FAAO4JXvxUEXxDF21wXMhSC+Qu4pECQ/Wpu1visB21IOt6EaW/RABgFuQ6UB+mTbFTMQ8An/Sv9q4AqAYZhCQPrSCA6wvLSfQFjLd6UMPbuIlgNgmHBVq+6w1VAxwFgDKAVjAayM/zYvzsAaxlbsxIwCx4IBDY6lT1FBgBrDasBawSy02JQHqC0QU7Ag4ozpGCwUgB00hBZAygAQayNMNawJeHNCpw5LmCMQHxmHn7HAIYtQUsBZ9Wz+wNcnBJXck5qLZHhSGkA6bcoOj2RHBWzgLGABMS8RSxh5/4JDEVgmEHFNN21vUxcz8mg/HjCshAgpZI9PglYgNP8giZmTEdtNPaJGUSUfDKbIkqVZBfr+kQptImbbZp+AzvFS8eQFFfVAAAAAElFTkSuQmCC" width="14" height="14" style="vertical-align:middle;"></button>
+      </div>
+      <div class="wd-patch-dots" id="reverbDots"></div>
+    </div>
     <div class="wd-subrow">
       <div class="wd-plabel" style="margin-bottom:4px;">EFFECT</div>
       <div class="wd-fx-uc">
@@ -342,6 +352,24 @@ input.wd-inp{width:100%;font-size:13px;padding:7px 10px;border-radius:7px;border
     <div class="wd-dialog-btns">
       <button class="wd-btn-cancel" onclick="closeOverlay('resetOverlay')">Cancel</button>
       <button class="wd-btn-ok" onclick="doReset()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- Polyphonic Reverb warning -->
+<div class="wd-overlay" id="reverbWarnOverlay">
+  <div class="wd-dialog">
+    <div class="wd-dialog-title" style="color:var(--wd-gold);">⚠️ Polyphonic Reverb — Unlock Warning</div>
+    <div class="wd-dialog-msg" style="line-height:1.7;">
+      This mode uses the built-in microphone.<br>
+      Speakers may cause feedback.<br>
+      <br>
+      <em>— The wind gets stronger from here.<br>
+      &nbsp;&nbsp;&nbsp;Prepare your wings.</em>
+    </div>
+    <div class="wd-dialog-btns">
+      <button class="wd-btn-cancel" onclick="closeOverlay('reverbWarnOverlay')">Cancel</button>
+      <button class="wd-btn-ok gold" onclick="doReverbProceed()">Proceed</button>
     </div>
   </div>
 </div>
@@ -545,6 +573,19 @@ function onRotation(v){
   setDirtyScale();drawLabels();
 }
 let flipActive=false;
+let reverbLocked=true;        // 起動時は常にロック
+let reverbWarningShown=false; // 警告は初回のみ
+
+function doReverbProceed(){
+  closeOverlay('reverbWarnOverlay');
+  reverbWarningShown=true;
+  selectPatch(16);
+}
+function toggleReverbLock(){
+  reverbLocked=!reverbLocked;
+  document.getElementById('reverbLockImg').src=reverbLocked?'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAACoElEQVR4nLWUO0xUURCG/znn7i6LPESNjYWPwkSDiSYIFhZqZW3CaqNSaKGtxkKLRYk8JIqJCdqIEgvDXcTKQmhIUAQkwaBAIKCywWh4hPcud89jLBYiwopQ8FeTmfm/mXNycoA15LquXE9uXQqHw2IxzLpdWno0XF6eDyBrRW1jsMqHjy6+b+v42T84xANDX7m14+Ove1VVlzcEXTrS3YqKk929fdzyoZ0fP615/aTmeX3zu1bu+tzDJWWVp5b3rilmlgBQ96qhvmdg0N4M37mwVLtVXHK+u6/fvozUNyzvXa5Ua1t2CyU5ct/34WH6MTbUyNzpY+70jYwONkWjURKObw+7hRKA/S9QSMkUipiJsdnE5NSsra1+a4jyFFGeqq1uUlPT83Z8fNqjUMQIKXmln5bHzEDxCQTOFh16IHYePKd0Wnq6mOwCcwIAGOyP87YjAd/CnBntrWt79uVaUTM8SlIYAJwlmutCEME03sg8fCA3eAWZ44AmILjlGIIyOTuugdgI4FAAO4JXvxUEXxDF21wXMhSC+Qu4pECQ/Wpu1visB21IOt6EaW/RABgFuQ6UB+mTbFTMQ8An/Sv9q4AqAYZhCQPrSCA6wvLSfQFjLd6UMPbuIlgNgmHBVq+6w1VAxwFgDKAVjAayM/zYvzsAaxlbsxIwCx4IBDY6lT1FBgBrDasBawSy02JQHqC0QU7Ag4ozpGCwUgB00hBZAygAQayNMNawJeHNCpw5LmCMQHxmHn7HAIYtQUsBZ9Wz+wNcnBJXck5qLZHhSGkA6bcoOj2RHBWzgLGABMS8RSxh5/4JDEVgmEHFNN21vUxcz8mg/HjCshAgpZI9PglYgNP8giZmTEdtNPaJGUSUfDKbIkqVZBfr+kQptImbbZp+AzvFS8eQFFfVAAAAAElFTkSuQmCC':'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAC7ElEQVR4nM2UTWicVRSGn3Pv901magg2aQRTjVoK2gRa1Ahi/6a4ruJPsmwlC1dCSVFooTAzbgJWcCEiVoo0LpRkm1YQSY1i4kYt/mGhqQgN0gxNmp+ZyTffvfd00aZGZoQRXPjCWZ17n/sezssV/oVUVUREARk5efLAw9u3d1+bny+fHh2dvnNAolZhhULBiEgYHh5+9IUXXz7b+1Dv3iiKCMGzf+++rz/+9JPhCZEr0iJPVJWBgYGOU4XC97t379kxeeHCpZs3l37u3Nr5+POHD/fPzM5cen1k5JlW3UUAo2+9/crlK1f1nXffOw/Ed9pbPjj70Vc//PiTvnHi1HOmFWA+nwegs6vrsbVKRReu//mhiKRjY2P3ANWlxcVzQUkf6O25rylQxwetqspG5fN5UVURsPV6XWzGuqmpA9Hc3JwHREU1qdfjWq1mmwJlaMKLiG6qVER0obzolpdXmf/9hj90aNr19xdTQNdXVz+fnf3m6NLCwmd/W4oqUszTNnRk1+l77+952qVWEWtSb1D1mmr2QZPZ0p1h4Wq9fO2L82d+O358lnURdINxNzbjg1gR/OSx3J6+XdnX2GYgCBgDOQNiYKUKyQ3IRjvpyu28/FTunEjt24uFg9GX5CkWi74hh3GsUVKp+DZxIfVi4wx6cUpFVfXgE5HRepCoFly9kkgmqzFA+ddpLU1M+1KpRAMwDah6tXgktpg/5uHY+xHOBSZLgR09SnAY9WrU/zVqw8gbykUgIYBz+FTp6mij75EMqkr31gS/nmCNgPfN9tkIDAZVl4ITgof2Nke1akhTR7tdxyWKtUpIUzS04BDFirqAF2cCJqkIR58VgkYka47YBtAQLCGKLPYfgYN9t1+r1uwKSWpol4z1YDPw0r7rIAJVIChEgl92rCV+efNdgIYcisBMsf3VbR3yZJKGoGBSbwghEN/2E7KxMeUV993+N2tnVGFzDv9zNf2+dBzLL817d9WPyhDNV/2/1i3yV2sFTorakAAAAABJRU5ErkJggg==';
+  document.getElementById('reverbDots').classList.toggle('locked', reverbLocked);
+}
 function flipScale(){
   // getDisplay()ベース（rotation適用済み）でflip
   // customNotesに焼き込んでrotShiftはリセットしない
@@ -656,7 +697,8 @@ function loadFactorySlot(patchIdx,slotIdx){
 function buildPatchDots(){
   const md=document.getElementById('metalDots');
   const wd=document.getElementById('woodDots');
-  md.innerHTML='';wd.innerHTML='';
+  const rd=document.getElementById('reverbDots');
+  md.innerHTML='';wd.innerHTML='';rd.innerHTML='';
   for(let i=0;i<11;i++){
     const d=document.createElement('div');
     d.className='pdot'+(selPatch===i?' sel':'');
@@ -669,6 +711,20 @@ function buildPatchDots(){
     d.onclick=()=>selectPatch(11+i);
     wd.appendChild(d);
   }
+  // reverb = idx 16
+  const r=document.createElement('div');
+  r.className='pdot'+(selPatch===16?' sel':'');
+  r.onclick=()=>{
+    if(reverbLocked)return;
+    if(!reverbWarningShown){
+      document.getElementById('reverbWarnOverlay').classList.add('show');
+      return; // doReverbProceed()で続きを処理
+    }
+    selectPatch(16);
+  };
+  rd.appendChild(r);
+  // ロック状態をDOMに反映（buildPatchDots再呼び出し時も維持）
+  rd.classList.toggle('locked', reverbLocked);
 }
 async function selectPatch(idx){
   selPatch=idx;buildPatchDots();
@@ -1182,6 +1238,8 @@ buildPatchDots();
 buildPresetBtns();
 buildPadGroups();
 loadFactorySlot(0,0);
+// 起動時のreverb初期状態を反映
+document.getElementById('reverbDots').classList.add('locked');
 </script>
 
 </body>
