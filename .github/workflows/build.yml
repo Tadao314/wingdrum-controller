@@ -23,7 +23,7 @@ jobs:
         run: pip install pyinstaller pywebview pyserial
 
       - name: Build with PyInstaller
-        run: python -m PyInstaller --clean wingdrum.spec
+        run: python -m PyInstaller --clean -y wingdrum.spec
 
       - name: Install Inno Setup
         run: choco install innosetup --yes
@@ -54,7 +54,7 @@ jobs:
         run: pip install pyinstaller pywebview pyserial
 
       - name: Build with PyInstaller
-        run: python -m PyInstaller --clean wingdrum.spec
+        run: python -m PyInstaller --clean -y wingdrum.spec
 
       - name: Install create-dmg
         run: brew install create-dmg
