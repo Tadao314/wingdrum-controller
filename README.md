@@ -20,16 +20,17 @@ Control scales, tuning, micro-tuning, and presets from your computer over USB, w
 - Switch between all built-in timbres instantly:
   - Metal 1–11
   - Wood 1–5
-  - Polyphonic Reverb
+  - Polyphonic Reverb *(uses built-in microphone — lock button included to prevent accidental activation; speakers may cause feedback)*
 - Patch changes are sent immediately on click (no Apply needed)
 
 ### Scale Selection
-- Full built-in scale library, organized by group:
-  - **Minor**: Minor, Minor Harmonic
+- Full built-in scale library, organized by collapsible groups (click group name to open/close):
+  - **Minor**: Minor, Minor Harmonic, Minor Sharp (G#), Melodic Minor
   - **Major**: Major, Major Pentatonic, Major Flat
-  - **Modes**: Lydian, Phrygian, Ionian
+  - **Modes**: Lydian, Phrygian, Phrygian Alt, Ionian, Greek Mixolydian, Altered, Diminished
   - **World**: Kurd Minor, Celtic Minor, Akebono Pentatonic, Annaziska, Pygmy, Deep Sea, Cloud, Celtic 2, Daze, Hijaz, Kurd 2, Voice, Shade
   - **World (Microtonal)**: Rast, Bayati, Saba, Hicaz, Bhairav, Todi, Darbari Kanada, Slendro, Pelog, Bali Pelog
+  - **Linear**: Major, Major Flat, Minor, Melodic Minor, Whole Tone, Diminished (H-W), Altered, Chromatic — all starting from D3, laid out clockwise in scale order (like a keyboard around the drum)
   - **User**: your saved custom scales
 - Microtonal world scales include per-pad cent offsets (auto-applied on selection)
 - **Transpose**: shift the entire scale ±6 semitones
