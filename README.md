@@ -86,10 +86,26 @@ Control scales, tuning, micro-tuning, and presets from your computer over USB, w
 - USB cable (USB-A to the WingDrum's port)
 
 ### Firmware
-The app requires the **experimental serial control firmware v1.01**, which adds USB serial command support. This is not the factory firmware.
+The app requires the **experimental serial control firmware v1.01**, which adds USB serial command support. This is not the factory firmware — it was developed in collaboration with Mario at PhonicBloom.
 
-Please contact PhonicBloom to obtain the firmware binary:
-📧 info@phonicbloom.com
+**Download:**
+http://phonicbloom.com/updates/wingdrum/wingdrum_fw-1.01-experimental.bin
+
+**Before flashing — back up your original firmware:**
+```bash
+python -m esptool --port COM4 --baud 115200 read_flash 0x30000 0x60000 wingdrum_backup_original.bin
+```
+
+**Flash the experimental firmware:**
+```bash
+# Enter boot mode: hold Power + Metal buttons, then connect USB
+# Release Metal once esptool connects; keep Power held until complete
+python -m esptool --port COM4 --baud 115200 write_flash 0x30000 wingdrum_fw-1.01-experimental.bin
+```
+
+> Replace `COM4` with your actual port. On macOS/Linux use `/dev/tty.usbserial-XXXX` or similar.
+
+> **Note:** The firmware outputs debug data to serial on startup and on button presses. This is normal — the app ignores it automatically.
 
 ### FTDI Driver (Windows)
 On some Windows systems, the FTDI USB serial driver may need to be installed manually:
